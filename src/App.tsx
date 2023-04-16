@@ -1,6 +1,7 @@
 import { Container, Divider, FormControl, FormControlLabel, FormLabel, InputAdornment, Paper, Radio, RadioGroup, TextField, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
 import React, { useState } from 'react';
+import Result from './Result';
 import { Stat } from './types';
 
 const numRegex = /^(\d*.\d+|\d+)([Ee][+-]?\d+)?$/;
@@ -57,8 +58,7 @@ function App() {
 
 	return (
 		<Container sx={{mt: 10}}>
-			<Stack>
-
+			<Stack gap={4}>
 				<Paper sx={{p: 5}}>
 					<Stack direction="row" gap={8}>
 						<Stack gap={5} sx={{minWidth: 200}}>
@@ -100,6 +100,16 @@ function App() {
 							The formulas and equations used are from the first results of google searches. 
 						</Typography>
 					</Stack>
+				</Paper>
+				<Paper sx={{p: 5}}>
+					<Typography variant='h5' color='primary'>Results</Typography>
+					{
+						stats == null ? (
+							<Typography variant='h6' color='error'>Please fill out all fields</Typography>
+						) : (
+							<Result stats={stats}/>
+						)
+					}
 				</Paper>
 			</Stack>
 		</Container>
