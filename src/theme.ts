@@ -1,8 +1,8 @@
-import { createTheme } from '@mui/material';
+import { createTheme, ThemeOptions } from '@mui/material';
 
-const themeOptions = {
+const themeOptions: ThemeOptions = {
 	palette: {
-		type: 'light',
+		mode: 'light',
 		primary: {
 			main: '#2e7d32',
 		},

@@ -1,3 +1,4 @@
+import { Menu } from '@mui/material';
 import React from 'react';
 import Canvas from './Canvas';
 import { Stat } from './types';
@@ -33,7 +34,7 @@ const draw = (stats: Stat) => (ctx: CanvasRenderingContext2D) => {
 		ctx.stroke();
 
 		ctx.lineWidth = 0.03 * height;
-		// draw the tick
+		// draw the ticks
 		for(let i = Math.ceil(min); i <= max; i++) {
 			const isMultipleOfFive = i % 5 === 0;
 			const tickHeight = isMultipleOfFive ? 0.10 : 0.06;
@@ -42,6 +43,7 @@ const draw = (stats: Stat) => (ctx: CanvasRenderingContext2D) => {
 			ctx.lineTo(map(i), half_y + tickHeight * height);
 			ctx.stroke();
 			if(isMultipleOfFive) {
+				// draw the labels every 5 ticks
 				ctx.font = `${0.15 * height}px sans-serif`;
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';
@@ -51,16 +53,53 @@ const draw = (stats: Stat) => (ctx: CanvasRenderingContext2D) => {
 	});
 
 	const bmi = stats.weight / (stats.height / 100) ** 2;
-	ctx.fillText(`${stats.weight.toFixed(2)}`, map(bmi), half_y - 0.25 * height);
+	ctx.fillText(`${stats.weight}`, map(bmi), half_y - 0.25 * height);
+	ctx.beginPath();
+	ctx.arc(map(bmi), half_y, 0.05 * height, 0, 2 * Math.PI);
+	ctx.fill();
 };
-
 
 const Result = ({stats}: {stats: Stat}) => {
 	const {gender, age, height, weight} = stats;
+
+	const tooltipDraw = (stats: Stat) => (ctx: CanvasRenderingContext2D, {x, y}: {x: number, y: number}): boolean => {
+		// check if the mouse is in the range
+		if(x < 0.05 || x > 0.95 || y < 0.40 || y > 0.60 ) {
+			return false;
+		}
+		const bmi = invlerp(0.05, 0.95 , x) * (35 - 15) + 15;
+		const weight = bmi * (stats.height / 100) ** 2;
+		ctx.fillStyle = 'white';
+		ctx.strokeStyle = 'black';
+		ctx.rect(0, 0, 150, 65);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.font = '20px sans-serif';
+		ctx.fillStyle = 'black';
+		ctx.textAlign = 'left';
+		ctx.fillText(`BMI: ${bmi.toFixed(2)}`, 15, 25);
+		ctx.fillText(`Weight: ${weight.toFixed(2)}`, 15, 50);
+		return true;
+	};
+
+	const bmi = weight / (height / 100) ** 2;
 	return (
 		<>
-			BMI
-			<Canvas sx={{border: '1px solid black', maxHeight: 150}} draw={draw(stats)}/>
+			BMI: {bmi.toFixed(2)}<br/>
+			<Canvas sx={{border: '1px solid black', maxHeight: 150}} draw={draw(stats)} tooltipDraw={tooltipDraw(stats)}/>
+			{/*<Menu
+				open={contextMenu !== null}
+				onClose={() => setContextMenu(null)}
+				anchorReference="anchorPosition"
+				anchorPosition={contextMenu ? {top: contextMenu.y, left: contextMenu.x} : undefined}
+				hideBackdrop
+				disableRestoreFocus
+				disablePortal
+			>
+				BMI: {contextMenu?.bmi.toFixed(2)}<br/>
+				Weight: {contextMenu?.weight.toFixed(2)}<br/>
+	</Menu> */}
 		</>
 	);
 };

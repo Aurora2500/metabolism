@@ -5,11 +5,13 @@ import { debounce } from './util';
 type CanvasProps = {
 	draw: (ctx: CanvasRenderingContext2D) => void,
 	sx?: BoxProps['sx'],
+	tooltipDraw?: (ctx: CanvasRenderingContext2D, pos: {x: number, y: number}) => boolean,
 };
 
 
-const Canvas: React.FC<CanvasProps> = ({draw, sx}) => {
+const Canvas: React.FC<CanvasProps> = ({draw, sx, tooltipDraw}) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const tooltipRef = useRef<HTMLCanvasElement>(null);
 	const divRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -37,8 +39,47 @@ const Canvas: React.FC<CanvasProps> = ({draw, sx}) => {
 		};
 	}, [draw]);
 
-	
-	return <Box sx={sx} ref={divRef}><canvas ref={canvasRef}/></Box>;
+	useEffect(() => {
+		if(tooltipDraw == null) return;
+		const canvas = canvasRef.current;
+		const tooltipCanvas = tooltipRef.current;
+
+		if(canvas == null || tooltipCanvas == null) return;
+		const tooltipCtx = tooltipCanvas.getContext('2d');
+		if(tooltipCtx == null) return;
+
+		const event = (e: MouseEvent) => {
+			const rect = canvas.getBoundingClientRect();
+			const x = (e.clientX - rect.left) / (rect.right - rect.left);
+			const y = (e.clientY - rect.top) / (rect.bottom - rect.top);
+			tooltipCtx.clearRect(0, 0, tooltipCanvas.width, tooltipCanvas.height);
+			if(tooltipDraw(tooltipCtx, {x, y})) {
+				tooltipCanvas.style.display = 'block';
+				tooltipCanvas.style.left = `${e.clientX - rect.left}px`;
+				tooltipCanvas.style.top = `${e.clientY - rect.top}px`;
+			} else {
+				tooltipCanvas.style.display = 'none';
+			}
+		};
+
+		canvas.addEventListener('mousemove', event);
+		return () => {
+			tooltipCtx.clearRect(0, 0, tooltipCanvas.width, tooltipCanvas.height);
+			canvas.removeEventListener('mousemove', event);
+		};
+	}, [tooltipDraw]);
+
+	return (
+		<Box sx={[
+			{
+				position: 'relative',
+			},
+			...((Array.isArray(sx)) ? sx : [sx])
+		]} ref={divRef}>
+			<canvas ref={canvasRef}/>
+			{ tooltipDraw && <canvas ref={tooltipRef} style={{position: 'absolute', pointerEvents: 'none'}}/> }
+		</Box>
+	);
 };
 
 export default Canvas;
